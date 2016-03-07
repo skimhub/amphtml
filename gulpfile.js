@@ -98,6 +98,7 @@ function buildExtensions(options) {
   buildExtension('amp-vimeo', '0.1', false, options);
   buildExtension('amp-vine', '0.1', false, options);
   buildExtension('amp-youtube', '0.1', false, options);
+  buildExtension('amp-skimlinks', '0.1', false, options);
 }
 
 
@@ -346,6 +347,7 @@ function buildExamples(watch) {
   buildExample('vine.amp.html');
   buildExample('multiple-docs.html');
   buildExample('youtube.amp.html');
+  buildExample('skimlinks.amp.html');
 
   // TODO(dvoytenko, #1393): Enable for proxy-testing.
   // // Examples are also copied into `c/` directory for AMP-proxy testing.
