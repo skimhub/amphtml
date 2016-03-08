@@ -1,11 +1,17 @@
 import {toggle} from '../../../src/style';
+import {Skimlinks} from './skimlinks';
 
 export class AmpSkimlinks extends AMP.BaseElement {
   
   createdCallback() {
-    this.getWin().document.addEventListener("click", function(e) {
-      console.log(e)
-    }, "false")
+    const skimId = AMP.assert(this.element.getAttribute('data-skim-id'),
+      'The data-do attribute is required for <amp-skimlinks> %s',
+      this.element);
+    
+    new Skimlinks({
+      skimId: skimId,
+      winContext: this.getWin()
+    })
   }
   
   preconnectCallback(onLayoutUnused) {
