@@ -16,7 +16,22 @@
   
   <a href="http://example.com">Example.com link</a>
   
-  <amp-skimlinks data-skim-id="123X456"></amp-skimlinks>
+  <amp-skimlinks data-skim-id="123X456">
+  <script type="application/json">
+    {
+      "excludeDomains": [],
+      "redirectingHost": "go.google.com"
+    }
+  </script>
+  </amp-skimlinks>
+  
+  <a href="http://g.anotherexample.com">Another example</a>
+  
+  <a href="/relative">Relative link</a>
+
+  <a href="HTTPS://WALMART.com">Walmart</a>
+  
+  <a href="HTTPS://walmart.com">Another Walmart</a>
 
   </body>
 </html>
