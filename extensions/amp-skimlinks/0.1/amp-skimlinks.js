@@ -1,17 +1,41 @@
 import {toggle} from '../../../src/style';
 import {Skimlinks} from './skimlinks';
+import {Page} from './page'
+import {SkimlinksTracking} from './tracking'
 
 export class AmpSkimlinks extends AMP.BaseElement {
   
   createdCallback() {
+    const truthMap = {
+      "1": true,
+      "true": true,
+      "0": false,
+      "false": false
+    }
+    
     const skimId = AMP.assert(this.element.getAttribute('data-skim-id'),
       'The data-do attribute is required for <amp-skimlinks> %s',
       this.element);
     
-    new Skimlinks({
+    const skimlinksActive = truthMap[this.element.getAttribute('data-skimlinks-active')] || true
+    
+    let skimlinksPage = new Page({
       skimId: skimId,
-      winContext: this.getWin()
+      contextWin: this.getWin()
     })
+    
+    let skimlinks = new Skimlinks({
+      skimId: skimId,
+      contextWin: this.getWin(),
+      page: skimlinksPage
+    })
+    
+    new SkimlinksTracking({
+      skimId: skimId,
+      contextWin: this.getWin(),
+      page: skimlinksPage
+    })
+    
   }
   
   preconnectCallback(onLayoutUnused) {

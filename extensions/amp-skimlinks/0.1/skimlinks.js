@@ -1,11 +1,4 @@
 import {DOM} from "./dom"
-import {Util} from "./util"
-import {parseUrl} from "../../../src/url"
-import {xhrFor} from '../../../src/xhr';
-
-function domain(url) {
-  return parseUrl(url).hostname
-}
 
 export class Skimlinks {
   constructor(config) {
@@ -20,8 +13,8 @@ export class Skimlinks {
     
     this.shouldRedirect = (url) => {
       //Url is affiliatable or unknown
-      return this.affiliateDomains.indexOf(domain(url)) >= 0 ||
-        (this.affiliateUnkownLinks && this.nonAffiliateDomain.indexOf(domain(url)) === -1)
+      return !this.isSameDomainUrl(url) && (this.isAffiliatableUrl(url) ||
+        (this.affiliateUnkownLinks && !this.isNAUrl(url)))
     }
     
     this.rewriteLinkUrl = (link) => {
@@ -32,24 +25,21 @@ export class Skimlinks {
       return newUrl
     }
     
-    this.affiliateDomains = []
-    this.nonAffiliateDomain = []
-        
-    this.setup(this, config || {})
+    this.page = config.page
     
-    this.xhr = xhrFor(this.contextWin)
+    this.setup(this, config || {})
     
     this.init()
     
   }
   
   setup(inst, config) {
+    inst.skimlinksEnabled = true
     inst.redirectingHost = 'go.redirectingat.com' || config.redirectingHost
     inst.affiliateUnkownLinks = true
     inst.skimId = config.skimId
     inst.contextWin = config.contextWin || window
     inst.blacklistedDomains = config.excludeDomains || []
-    inst.tracking = true
   }
   
   handleClick(handler) {
@@ -61,37 +51,16 @@ export class Skimlinks {
     this.handleClick(this.clickHandler.bind(this))
   }
   
-  beaconRequestData() {
-    return {
-      pubcode: this.skimId,
-      domains: this.getDomainsSet(),
-      page: this.contextWin.location.href
-    }
+  isAffiliatableUrl(url) {
+    return this.page.isAffiliatableUrl(url)
   }
   
-  callBeacon() {
-    let url = "//r.skimresources.com/api/?data=" + encodeURIComponent(JSON.stringify(this.beaconRequestData()))
-    this.xhr.fetch_(url,
-      {method: 'GET', mode: 'cors', cache: 'no-store'})
-        .then(buffer => buffer.json())
-        .then(response => 
-          this.clasifyDomains(response.merchant_domains)
-        )
+  isNAUrl(url) {
+    return this.page.isNAUrl(url)
   }
   
-  getDomainsSet() {
-    return Util.unique(this.getSupportedLinks().map(url => domain(url)))
-  }
-  
-  getSupportedLinks() {
-    let links = this.contextWin.document.querySelectorAll('a[href],area[href]')
-    //Cut out pseudo-protocols and data-urls
-    return Util.arrFilter(links, link => link.protocol.indexOf('http') === 0)
-  }
-  
-  clasifyDomains(affiliateDomains) {
-    this.affiliateDomains = affiliateDomains
-    this.nonAffiliateDomain = Util.diff(this.getDomainsSet(), affiliateDomains)
+  isSameDomainUrl(url) {
+    return this.page.isSameDomainUrl(url)
   }
   
   clickHandler(event) {
@@ -100,16 +69,13 @@ export class Skimlinks {
         if (this.shouldRedirect(link.href)) {
           this.rewriteLinkUrl(link)
         }
-        if (this.tracking) {
-          
-        }
     }
     return false
   }
   
   init() {
-    this.enableClickHandler()
-    this.callBeacon()
+    if (this.skimlinksEnabled) {
+      this.enableClickHandler()
+    }
   }
-  
 }
