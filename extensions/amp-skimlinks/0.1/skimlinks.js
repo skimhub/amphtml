@@ -25,8 +25,10 @@ export class Skimlinks {
     }
     
     this.rewriteLinkUrl = (link) => {
-      let newUrl = this.createAffiliateUrl(link.href)
+      let origUrl = link.getAttribute('href')
+      let newUrl = this.createAffiliateUrl(origUrl)
       link.href = newUrl
+      setTimeout(() => link.setAttribute("href", origUrl), 100)
       return newUrl
     }
     
@@ -47,10 +49,12 @@ export class Skimlinks {
     inst.skimId = config.skimId
     inst.contextWin = config.contextWin || window
     inst.blacklistedDomains = config.excludeDomains || []
+    inst.tracking = true
   }
   
   handleClick(handler) {
     DOM.listen(this.contextWin.document, "click", handler, true)
+    DOM.listen(this.contextWin.document, "contextmenu", handler, true)
   }
   
   enableClickHandler() {
@@ -94,7 +98,10 @@ export class Skimlinks {
     if (DOM.isLinkLike(event.target)) {
         let link = event.target
         if (this.shouldRedirect(link.href)) {
-            this.rewriteLinkUrl(link)
+          this.rewriteLinkUrl(link)
+        }
+        if (this.tracking) {
+          
         }
     }
     return false
