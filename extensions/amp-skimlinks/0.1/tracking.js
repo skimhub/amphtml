@@ -21,8 +21,49 @@ export class SkimlinksTracking {
       
     }
     
-    trackLinks() {
+    getImpressionRequest() {
+      let skimlinksUrls = this.page.getSupportedLinks()
+        .map(link => link.href)
+        .filter(url => this.page.isAffiliatableUrl(url))
         
+      let slmIds = Util.unique(skimlinksUrls
+        .map(url => this.page.slmCampaignId(url))
+        .filter(Boolean))
+          
+      return {
+        pag: this.contextWin.location.href,       // page we are on
+        pub: this.skimId,                         // skim ID
+        phr: {},                                  // phrases (skimwords)
+        unl: {},                                  // unlinked
+        slc: skimlinksUrls.length,                // skimlinks count
+        swc: 0,                                   // skimwords count
+        ulc: 0,                                   // unlinked count
+        jsl: Date.now() - this.loadStart,         // JS load time
+        jsf: "",                                  // JS fingerprint
+        uc: "",                                   // user custom
+        t: 1,                                     // whether or not to store the page impression part
+        slmcid: slmIds,                           // slm campaings
+        tz: new Date().getTimezoneOffset(),       // user timezone
+        pref: this.contextWin.document.referrer,
+        guid: "",                                 // user cookie
+        uuid: "",                                 // unique impression id
+        sessid: "",                               // session id
+      }
+    }
+    
+    trackImpression() {
+      let tracking = this
+      return this.page.fetchAffiliateInfo().then(function(response) {
+        let fd = new FormData()
+        tracking.xhr.fetch_("//t.skimresources.com/api/track.php",
+          {method: 'POST',
+          mode: 'cors',
+          cache: 'no-store',
+          headers: {
+            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+          },
+          body: "data=" + JSON.stringify(tracking.getImpressionRequest())})
+      })
     }
     
     linksTrackingRequest() {
@@ -43,7 +84,7 @@ export class SkimlinksTracking {
       }, {})
     }
     
-    getImpressionRequest() {
+    getLinksRequest() {
       let skimlinksUrls = this.page.getSupportedLinks()
         .map(link => link.href)
         .filter(url => this.page.isAffiliatableUrl(url))
@@ -66,7 +107,7 @@ export class SkimlinksTracking {
       }
     }
         
-    trackImpressions() {
+    trackLinks() {
       let tracking = this
       return this.page.fetchAffiliateInfo().then(function(response) {
         let fd = new FormData()
@@ -77,7 +118,7 @@ export class SkimlinksTracking {
           headers: {
             "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
           },
-          body: "data=" + JSON.stringify(tracking.getImpressionRequest())})
+          body: "data=" + JSON.stringify(tracking.getLinksRequest())})
       })
     }
     
@@ -86,8 +127,8 @@ export class SkimlinksTracking {
         let tracking = this
         doc.addEventListener("readystatechange", function() {
             if (document.readyState === "interactive" || document.readyState === "complete") {
+                tracking.trackImpression()
                 tracking.trackLinks()
-                tracking.trackImpressions()
             }
         })
     }
