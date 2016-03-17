@@ -3,9 +3,11 @@ import {Skimlinks} from './skimlinks';
 import {Page} from './page'
 import {SkimlinksTracking} from './tracking'
 
+const loadStart = Date.now()
 export class AmpSkimlinks extends AMP.BaseElement {
   
   createdCallback() {
+    
     const truthMap = {
       "1": true,
       "true": true,
@@ -33,7 +35,8 @@ export class AmpSkimlinks extends AMP.BaseElement {
     new SkimlinksTracking({
       skimId: skimId,
       contextWin: this.getWin(),
-      page: skimlinksPage
+      page: skimlinksPage,
+      loadStart: loadStart
     })
     
   }

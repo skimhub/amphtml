@@ -13,8 +13,8 @@ export class Skimlinks {
     
     this.shouldRedirect = (url) => {
       //Url is affiliatable or unknown
-      return !this.isSameDomainUrl(url) && (this.isAffiliatableUrl(url) ||
-        (this.affiliateUnkownLinks && !this.isNAUrl(url)))
+      return !this.page.isSameDomainUrl(url) && (this.page.isAffiliatableUrl(url) ||
+        (this.affiliateUnkownLinks && !this.page.isNAUrl(url)))
     }
     
     this.rewriteLinkUrl = (link) => {
@@ -49,18 +49,6 @@ export class Skimlinks {
   
   enableClickHandler() {
     this.handleClick(this.clickHandler.bind(this))
-  }
-  
-  isAffiliatableUrl(url) {
-    return this.page.isAffiliatableUrl(url)
-  }
-  
-  isNAUrl(url) {
-    return this.page.isNAUrl(url)
-  }
-  
-  isSameDomainUrl(url) {
-    return this.page.isSameDomainUrl(url)
   }
   
   clickHandler(event) {

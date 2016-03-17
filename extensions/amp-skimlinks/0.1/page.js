@@ -15,22 +15,33 @@ export class Page {
     this.affiliateDomains = []
     this.nonAffiliateDomains = []
     this.xhr = xhrFor(this.contextWin)
-
-    let supportedLinks = this.getSupportedLinks()    
-    this.fetchDomainsInfo(this.beaconRequestData(Page.prototype.getDomainsSet(supportedLinks)))
-      .then(function(response) {
-        let affiliateDomains = response.merchant_domains
-        page.affiliateDomains = affiliateDomains
-        page.nonAffiliateDomains = Util.diff(Page.prototype.getDomainsSet(supportedLinks), affiliateDomains)
+    
+    this.fetchAffiliateInfo()
+      .then(function(info) {
+        Object.assign(page, info)
       })
   }
   
   fetchDomainsInfo(request) {
+    if (this.domainsInfoPromise) return this.domainsInfoPromise
     let url = "//r.skimresources.com/api/?data=" + encodeURIComponent(JSON.stringify(request))
-    return this.xhr.fetch_(url,
+    this.domainsInfoPromise = this.xhr.fetch_(url,
       {method: 'GET', mode: 'cors', cache: 'no-store'})
         .then(response => response.json())
-      }
+    return this.domainsInfoPromise
+  }
+  
+  fetchAffiliateInfo() {
+    let supportedLinks = this.getSupportedLinks()
+    return this.fetchDomainsInfo(this.beaconRequestData(Page.prototype.getDomainsSet(supportedLinks)))
+      .then(function(response) {
+        let affiliateDomains = response.merchant_domains
+        return {
+          affiliateDomains,
+          nonAffiliateDomains: Util.diff(Page.prototype.getDomainsSet(supportedLinks), affiliateDomains)
+        }
+      })
+  }
   
   beaconRequestData(domains) {
     return {
@@ -48,6 +59,22 @@ export class Page {
     let links = this.contextWin.document.querySelectorAll('a[href],area[href]')
     //Cut out pseudo-protocols and data-urls
     return Util.arrFilter(links, link => link.getAttribute('href').toLowerCase().indexOf('http') === 0)
+  }
+  
+  //returns 0 if not an SLM url or a positive number if slm id found
+  slmCampaignId(url) {
+    let hash = parseUrl(url).hash
+    let slmId = 0
+    if (hash) {
+      let longId = hash.match(/slm-\d{3,}/)
+      if (longId && longId.length) {
+        numId = Number(longId[0].split('-').pop())
+        if (numId) {
+          slmId = numId
+        }
+      }
+    }
+    return slmId
   }
   
   isAffiliatableUrl(url) {

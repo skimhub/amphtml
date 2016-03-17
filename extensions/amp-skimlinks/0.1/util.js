@@ -1,13 +1,5 @@
-function mergeObjects(...objs) {
-  let ret = {}
-  arrFilter(objs, obj => obj)
-    .forEach(function(obj) {
-      Object.keys(obj)
-        .forEach(function(key){
-          ret[key] = obj[key]
-        })
-    })
-  return ret
+function mergeObjects() {
+  return Object.assign({}, ...arguments)
 }
 
 function unique(arr) {
