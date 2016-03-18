@@ -5,6 +5,7 @@ import {parseUrl} from "../../../src/url"
 export class SkimlinksTracking {
     constructor(config) {
         this.page = config.page
+        this.click = config.click
         this.loadStart = config.loadStart
         this.setup(this, config || {})
         this.xhr = xhrFor(this.contextWin)
@@ -14,11 +15,40 @@ export class SkimlinksTracking {
     
     setup(inst, config) {
         inst.skimId = config.skimId
+        inst.skimlinksSite = config.skimlinksSite
         inst.contextWin = config.contextWin || window
     }
     
-    trackClick() {
-      
+    shouldTrackClick(url) {
+      // TODO this seems a bit simplistic
+      return !this.page.isSameDomainUrl(url) && this.page.isNAUrl(url)
+    }
+    
+    getClickRequest(url) {
+      return {
+        pubcode: this.skimId,                       // skim ID
+        referrer: this.contextWin.location.href,    // page we are on
+        pref: this.contextWin.document.referrer,
+        site: this.skimlinksSite,
+        url: url,                                   // click url
+        custom: "",                                 // user custom var (not supported)
+        xtz: new Date().getTimezoneOffset(),        // user timezone
+        uuid: "",
+        slmcid: this.page.slmCampaignId(url) || "",
+        product: "1"
+      }
+    }
+    
+    trackClick(link) {
+      let url = link.href
+      if (this.shouldTrackClick(url)) {
+        let doc = this.contextWin.document
+        let px = doc.createElement("amp-pixel")
+        px.setAttribute("src", "//t.skimresources.com/api/?call=track&data=" +
+          encodeURIComponent(JSON.stringify(this.getClickRequest(url))) +
+          "&rnd=" + Math.random())
+        doc.body.appendChild(px)
+      }
     }
     
     getTrackingInfo() {
@@ -123,6 +153,7 @@ export class SkimlinksTracking {
     }
     
     init() {
+        this.click.listen(this.trackClick.bind(this))
         let doc = this.contextWin.document
         let tracking = this
         doc.addEventListener("readystatechange", function() {

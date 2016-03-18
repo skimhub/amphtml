@@ -27,6 +27,8 @@ export class Skimlinks {
     
     this.page = config.page
     
+    this.click = config.click
+    
     this.setup(this, config || {})
     
     this.init()
@@ -42,23 +44,14 @@ export class Skimlinks {
     inst.blacklistedDomains = config.excludeDomains || []
   }
   
-  handleClick(handler) {
-    DOM.listen(this.contextWin.document, "click", handler, true)
-    DOM.listen(this.contextWin.document, "contextmenu", handler, true)
-  }
-  
   enableClickHandler() {
-    this.handleClick(this.clickHandler.bind(this))
+    this.click.listen(this.clickHandler.bind(this))
   }
   
-  clickHandler(event) {
-    if (DOM.isLinkLike(event.target)) {
-        let link = event.target
-        if (this.shouldRedirect(link.href)) {
-          this.rewriteLinkUrl(link)
-        }
+  clickHandler(link) {
+    if (this.shouldRedirect(link.href)) {
+      this.rewriteLinkUrl(link)
     }
-    return false
   }
   
   init() {
