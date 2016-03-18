@@ -21,15 +21,20 @@ export class SkimlinksTracking {
       
     }
     
-    getImpressionRequest() {
+    getTrackingInfo() {
       let skimlinksUrls = this.page.getSupportedLinks()
         .map(link => link.href)
         .filter(url => this.page.isAffiliatableUrl(url))
-        
-      let slmIds = Util.unique(skimlinksUrls
-        .map(url => this.page.slmCampaignId(url))
-        .filter(Boolean))
-          
+      return {
+          skimlinksUrls,
+          slmIds: Util.unique(skimlinksUrls
+            .map(url => this.page.slmCampaignId(url))
+            .filter(Boolean))
+      }
+    }
+    
+    getImpressionRequest() {
+      let {skimlinksUrls, slmIds} = this.getTrackingInfo()
       return {
         pag: this.contextWin.location.href,       // page we are on
         pub: this.skimId,                         // skim ID
@@ -53,17 +58,18 @@ export class SkimlinksTracking {
     
     trackImpression() {
       let tracking = this
-      return this.page.fetchAffiliateInfo().then(function(response) {
-        let fd = new FormData()
-        tracking.xhr.fetch_("//t.skimresources.com/api/track.php",
-          {method: 'POST',
-          mode: 'cors',
-          cache: 'no-store',
-          headers: {
-            "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
-          },
-          body: "data=" + JSON.stringify(tracking.getImpressionRequest())})
-      })
+      return this.page.fetchAffiliateInfo()
+        .then(function(response) {
+          let fd = new FormData()
+          tracking.xhr.fetch_("//t.skimresources.com/api/track.php",
+            {method: 'POST',
+            mode: 'cors',
+            cache: 'no-store',
+            headers: {
+              "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
+            },
+            body: "data=" + JSON.stringify(tracking.getImpressionRequest())})
+        })
     }
     
     linksTrackingRequest() {
@@ -85,13 +91,7 @@ export class SkimlinksTracking {
     }
     
     getLinksRequest() {
-      let skimlinksUrls = this.page.getSupportedLinks()
-        .map(link => link.href)
-        .filter(url => this.page.isAffiliatableUrl(url))
-            
-      let slmIds = Util.unique(skimlinksUrls
-        .map(url => this.page.slmCampaignId(url))
-        .filter(Boolean))
+      let {skimlinksUrls, slmIds} = this.getTrackingInfo()
       
       return {
         dl: this.linksTrackingRequest(),
