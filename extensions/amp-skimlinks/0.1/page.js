@@ -16,29 +16,30 @@ export class Page {
     this.nonAffiliateDomains = []
     this.xhr = xhrFor(this.contextWin)
     
-    this.fetchAffiliateInfo()
+    this.fetchBeaconInfo()
       .then(function(info) {
         Object.assign(page, info)
       })
   }
   
-  fetchDomainsInfo(request) {
+  beaconRequest(requestData) {
     if (this.domainsInfoPromise) return this.domainsInfoPromise
-    let url = "//r.skimresources.com/api/?data=" + encodeURIComponent(JSON.stringify(request))
+    let url = "//amp.local/api/?ensure=cookie&data=" + encodeURIComponent(JSON.stringify(requestData))
     this.domainsInfoPromise = this.xhr.fetch_(url,
-      {method: 'GET', mode: 'cors', cache: 'no-store'})
+      {method: 'GET', mode: 'cors', cache: 'no-store', credentials: 'include'})
         .then(response => response.json())
     return this.domainsInfoPromise
   }
   
-  fetchAffiliateInfo() {
+  fetchBeaconInfo() {
     let supportedLinks = this.getSupportedLinks()
-    return this.fetchDomainsInfo(this.beaconRequestData(Page.prototype.getDomainsSet(supportedLinks)))
+    return this.beaconRequest(this.beaconRequestData(Page.prototype.getDomainsSet(supportedLinks)))
       .then(function(response) {
         let affiliateDomains = response.merchant_domains
         return {
           affiliateDomains,
-          nonAffiliateDomains: Util.diff(Page.prototype.getDomainsSet(supportedLinks), affiliateDomains)
+          nonAffiliateDomains: Util.diff(Page.prototype.getDomainsSet(supportedLinks), affiliateDomains),
+          guid: response.guid
         }
       })
   }

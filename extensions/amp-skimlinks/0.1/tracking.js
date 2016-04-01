@@ -63,7 +63,7 @@ export class SkimlinksTracking {
       }
     }
     
-    getImpressionRequest() {
+    getImpressionRequest(values) {
       let {skimlinksUrls, slmIds} = this.getTrackingInfo()
       return {
         pag: this.contextWin.location.href,       // page we are on
@@ -80,17 +80,18 @@ export class SkimlinksTracking {
         slmcid: slmIds,                           // slm campaings
         tz: new Date().getTimezoneOffset(),       // user timezone
         pref: this.contextWin.document.referrer,
-        guid: "",                                 // user cookie
+        guid: values.guid,                        // user cookie
         uuid: "",                                 // unique impression id
-        sessid: "",                               // session id
+        sessid: "",                               // session (not supported)
       }
     }
     
     trackImpression() {
       let tracking = this
-      return this.page.fetchAffiliateInfo()
+      return this.page.fetchBeaconInfo()
         .then(function(response) {
           let fd = new FormData()
+          let {guid} = response
           tracking.xhr.fetch_("//t.skimresources.com/api/track.php",
             {method: 'POST',
             mode: 'cors',
@@ -98,7 +99,7 @@ export class SkimlinksTracking {
             headers: {
               "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
             },
-            body: "data=" + JSON.stringify(tracking.getImpressionRequest())})
+            body: "data=" + JSON.stringify(tracking.getImpressionRequest({guid}))})
         })
     }
     
@@ -120,16 +121,16 @@ export class SkimlinksTracking {
       }, {})
     }
     
-    getLinksRequest() {
+    getLinksRequest(values) {
       let {skimlinksUrls, slmIds} = this.getTrackingInfo()
       
       return {
         dl: this.linksTrackingRequest(),
         pag: this.contextWin.location.href,       // page we are on
         pub: this.skimId,                         // skim ID
-        guid: "",                                 // user cookie
+        guid: values.guid,                        // user cookie
         uuid: "",                                 // unique impression id
-        sessid: "",                               // session id
+        sessid: "",                               // session id (not supported)
         tz: new Date().getTimezoneOffset(),       // user timezone
         slmcid: slmIds,                           // slm campaings
         typ: "l",                                 // type
@@ -139,8 +140,9 @@ export class SkimlinksTracking {
         
     trackLinks() {
       let tracking = this
-      return this.page.fetchAffiliateInfo().then(function(response) {
+      return this.page.fetchBeaconInfo().then(function(response) {
         let fd = new FormData()
+        let {guid} = response
         tracking.xhr.fetch_("//t.skimresources.com/api/link",
           {method: 'POST',
           mode: 'cors',
@@ -148,7 +150,7 @@ export class SkimlinksTracking {
           headers: {
             "Content-type": "application/x-www-form-urlencoded; charset=UTF-8"
           },
-          body: "data=" + JSON.stringify(tracking.getLinksRequest())})
+          body: "data=" + JSON.stringify(tracking.getLinksRequest({guid}))})
       })
     }
     
@@ -157,6 +159,9 @@ export class SkimlinksTracking {
         let doc = this.contextWin.document
         let tracking = this
         doc.addEventListener("readystatechange", function() {
+            tracking.page.domainsInfoPromise.then(function(response) {
+              console.log(response.guid)
+            })
             if (document.readyState === "interactive" || document.readyState === "complete") {
                 tracking.trackImpression()
                 tracking.trackLinks()
