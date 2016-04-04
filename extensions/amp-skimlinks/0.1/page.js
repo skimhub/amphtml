@@ -6,6 +6,11 @@ function domain(url) {
   return parseUrl(url).hostname
 }
 
+function canonical(domain) {
+  console.log(domain, domain.replace(/^\.www, ""/))
+  return domain.replace(/^www\./, "")
+}
+
 export class Page {
   
   constructor(config) {
@@ -24,7 +29,7 @@ export class Page {
   
   beaconRequest(requestData) {
     if (this.domainsInfoPromise) return this.domainsInfoPromise
-    let url = "//amp.local/api/?ensure=cookie&data=" + encodeURIComponent(JSON.stringify(requestData))
+    let url = "//amp.local:3001/api/?ensure=cookie&data=" + encodeURIComponent(JSON.stringify(requestData))
     this.domainsInfoPromise = this.xhr.fetch_(url,
       {method: 'GET', mode: 'cors', cache: 'no-store', credentials: 'include'})
         .then(response => response.json())
@@ -32,13 +37,13 @@ export class Page {
   }
   
   fetchBeaconInfo() {
-    let supportedLinks = this.getSupportedLinks()
-    return this.beaconRequest(this.beaconRequestData(Page.prototype.getDomainsSet(supportedLinks)))
+    let supportedUrls = this.getSupportedLinks().map(link => link.href)
+    return this.beaconRequest(this.beaconRequestData(Page.prototype.getDomainsSet(supportedUrls)))
       .then(function(response) {
         let affiliateDomains = response.merchant_domains
         return {
           affiliateDomains,
-          nonAffiliateDomains: Util.diff(Page.prototype.getDomainsSet(supportedLinks), affiliateDomains),
+          nonAffiliateDomains: Util.diff(Page.prototype.getDomainsSet(supportedUrls), affiliateDomains),
           guid: response.guid
         }
       })
@@ -53,7 +58,7 @@ export class Page {
   }
     
   getDomainsSet(links) {
-    return Util.unique(links.map(url => domain(url)))
+    return Util.unique(links.map(url => canonical(domain(url))))
   }
   
   getSupportedLinks() {

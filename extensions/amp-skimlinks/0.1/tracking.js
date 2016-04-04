@@ -159,9 +159,6 @@ export class SkimlinksTracking {
         let doc = this.contextWin.document
         let tracking = this
         doc.addEventListener("readystatechange", function() {
-            tracking.page.domainsInfoPromise.then(function(response) {
-              console.log(response.guid)
-            })
             if (document.readyState === "interactive" || document.readyState === "complete") {
                 tracking.trackImpression()
                 tracking.trackLinks()
