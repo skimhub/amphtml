@@ -106,7 +106,7 @@ export class SkimlinksTracking {
     linksTrackingRequest() {
       let tracking = this
       return tracking.page.getSupportedLinks().reduce(function(ret, link) {
-        let href = link.href
+        let href = encodeURIComponent(link.href)
         if (!(href in ret)) {
           ret[href] = {count: 1, ae: Number(tracking.page.isAffiliatableUrl(href))}
         }

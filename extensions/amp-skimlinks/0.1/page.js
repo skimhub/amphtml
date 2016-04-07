@@ -7,7 +7,6 @@ function domain(url) {
 }
 
 function canonical(domain) {
-  console.log(domain, domain.replace(/^\.www, ""/))
   return domain.replace(/^www\./, "")
 }
 
