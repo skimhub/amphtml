@@ -75,7 +75,7 @@ export class Page {
   }
   
   isAffiliatableUrl(url) {
-    return this.affiliateDomains.indexOf(Util.domain(url)) >= 0
+    return this.affiliateDomains.indexOf(Util.canonical(Util.domain(url))) >= 0
   }
   
   isNAUrl(url) {
@@ -85,4 +85,15 @@ export class Page {
   isSameDomainUrl(url) {
     return this.contextWin.location.hostname === Util.domain(url)
   }
+  
+  isSubDomain(longerDomain, shorterDomain) {
+    let shortDomainStart = longerDomain.lastIndexOf(shorterDomain)
+    return shortDomainStart + shorterDomain.length === longerDomain.length && longerDomain.charAt(shortDomainStart-1) === "."
+  }
+  
+  isFromSameDomain(url) {
+    let longerFirst = [Util.domain(url), this.contextWin.location.hostname].sort((a,b) => b.length - a.length)
+    return this.isSubDomain(...(longerFirst))
+  }
+  
 }

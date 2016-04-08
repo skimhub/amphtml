@@ -14,8 +14,9 @@ export class Skimlinks {
     
     this.shouldRedirect = (url) => {
       //Url is affiliatable or unknown
-      return !this.page.isSameDomainUrl(url) && (this.page.isAffiliatableUrl(url) ||
-        (this.affiliateUnkownLinks && !this.page.isNAUrl(url)))
+      return !this.page.isSameDomainUrl(url) &&
+        !this.page.isFromSameDomain(url) &&
+        (this.page.isAffiliatableUrl(url) || (this.affiliateUnkownLinks && !this.page.isNAUrl(url)))
     }
     
     this.rewriteLinkUrl = (link) => {
