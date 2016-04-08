@@ -1,3 +1,5 @@
+import {parseUrl} from "../../../src/url"
+
 function mergeObjects() {
   return Object.assign({}, ...arguments)
 }
@@ -17,9 +19,32 @@ function arrFilter(arr, func) {
   return Array.prototype.filter.call(arr, func)
 }
 
+function domain(url) {
+  return parseUrl(url).hostname
+}
+
+function canonical(domain) {
+  return domain.replace(/^www\./, "")
+}
+
+// TODO replace with https://developer.mozilla.org/en-US/docs/Web/API/URLSearchParams when widely supported
+function urlSearchParams(searchStr) {
+  if (searchStr.charAt(0) === "?") {
+    searchStr = searchStr.substr(1)
+  }
+  return searchStr.split("&").reduce(function(ret, pair) {
+    let [name, value] = pair.split('=')
+    Object.assign(ret, {[name]: value})
+    return ret
+  }, {})
+}
+
 export const Util = {
   mergeObjects,
   unique,
   diff,
-  arrFilter
+  arrFilter,
+  urlSearchParams,
+  domain,
+  canonical
 }

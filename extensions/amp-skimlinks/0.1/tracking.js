@@ -1,6 +1,7 @@
 import {xhrFor} from '../../../src/xhr';
 import {Util} from "./util"
 import {parseUrl} from "../../../src/url"
+import {skimConst} from "./const"
 
 export class SkimlinksTracking {
     constructor(config) {
@@ -103,10 +104,26 @@ export class SkimlinksTracking {
         })
     }
     
+    // Remove IDs that should never be hardcoded in our links
+    cleanUrl(url) {
+      let skimUrl = skimConst.redirUrls.indexOf(Util.domain(url)) > -1
+      if (skimUrl) {
+        let urlObj = this.contextWin.document.createElement('a')
+        urlObj.href = url
+        let unwanted = ["xguid", "xuuid", "xsessid"]
+        let paramsObj = Util.urlSearchParams(parseUrl(url).search)
+        let wantedParams = Util.diff(Object.keys(paramsObj), unwanted)
+          .map(param => [param, paramsObj[param]].join('='))
+        urlObj.search = '?' + wantedParams.join('&')
+        url = urlObj.href
+      }
+      return url
+    }
+    
     linksTrackingRequest() {
       let tracking = this
       return tracking.page.getSupportedLinks().reduce(function(ret, link) {
-        let href = encodeURIComponent(link.href)
+        let href = encodeURIComponent(tracking.cleanUrl(link.href))
         if (!(href in ret)) {
           ret[href] = {count: 1, ae: Number(tracking.page.isAffiliatableUrl(href))}
         }
@@ -159,7 +176,7 @@ export class SkimlinksTracking {
         let doc = this.contextWin.document
         let tracking = this
         doc.addEventListener("readystatechange", function() {
-            if (document.readyState === "interactive" || document.readyState === "complete") {
+            if (doc.readyState === "interactive" || doc.readyState === "complete") {
                 tracking.trackImpression()
                 tracking.trackLinks()
             }

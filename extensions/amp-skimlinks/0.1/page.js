@@ -2,14 +2,6 @@ import {Util} from "./util"
 import {parseUrl} from "../../../src/url"
 import {xhrFor} from '../../../src/xhr';
 
-function domain(url) {
-  return parseUrl(url).hostname
-}
-
-function canonical(domain) {
-  return domain.replace(/^www\./, "")
-}
-
 export class Page {
   
   constructor(config) {
@@ -57,7 +49,7 @@ export class Page {
   }
     
   getDomainsSet(links) {
-    return Util.unique(links.map(url => canonical(domain(url))))
+    return Util.unique(links.map(url => Util.canonical(Util.domain(url))))
   }
   
   getSupportedLinks() {
@@ -83,14 +75,14 @@ export class Page {
   }
   
   isAffiliatableUrl(url) {
-    return this.affiliateDomains.indexOf(domain(url)) >= 0
+    return this.affiliateDomains.indexOf(Util.domain(url)) >= 0
   }
   
   isNAUrl(url) {
-    return this.nonAffiliateDomains.indexOf(domain(url)) >=0 
+    return this.nonAffiliateDomains.indexOf(Util.domain(url)) >=0 
   }
   
   isSameDomainUrl(url) {
-    return this.contextWin.location.hostname === domain(url)
+    return this.contextWin.location.hostname === Util.domain(url)
   }
 }

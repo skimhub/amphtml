@@ -1,4 +1,5 @@
 import {DOM} from "./dom"
+import {skimConst} from "./const"
 
 export class Skimlinks {
   constructor(config) {
@@ -26,7 +27,6 @@ export class Skimlinks {
     }
     
     this.page = config.page
-    
     this.click = config.click
     
     this.setup(this, config || {})
@@ -37,7 +37,7 @@ export class Skimlinks {
   
   setup(inst, config) {
     inst.skimlinksEnabled = true
-    inst.redirectingHost = 'go.redirectingat.com' || config.redirectingHost
+    inst.redirectingHost = skimConst.redirUrls[0] || config.redirectingHost
     inst.affiliateUnkownLinks = true
     inst.skimId = config.skimId
     inst.contextWin = config.contextWin || window
