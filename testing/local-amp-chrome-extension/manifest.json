@@ -28,5 +28,12 @@
     "webRequest",
     "webRequestBlocking",
     "*://*/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://www.google.co.uk/amp/*", "https://*.cdn.ampproject.org/v/*", "http://lepunk.co.uk/*"],
+      "all_frames": true,
+      "js": ["content-script.js"]
+    }
   ]
 }

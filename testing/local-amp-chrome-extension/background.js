@@ -41,6 +41,27 @@ chrome.webRequest.onBeforeRequest.addListener(
   },
   ['blocking']);
 
+// chrome.webRequest.onHeadersReceived.addListener(
+//   function(details) {
+//     // const newHeaders = details.responseHeaders.filter(function(header) {
+//     //   return header.name !== "content-security-policy";
+//     // })
+//     // details.responseHeaders.push({ 'name': 'wtf', 'value': 'fu' })
+//     console.log(details.url, details.responseHeaders);
+//     return { responseHeaders: [details.responseHeaders] };
+//   },
+//   {
+//     urls: ["https://*.cdn.ampproject.org/*"]
+//   },
+//   ["blocking", "responseHeaders"]
+// );
+
+chrome.webRequest.onHeadersReceived.addListener(details => {
+  const newHeaders = details.responseHeaders.filter(function(header) {
+    return header.name !== "content-security-policy";
+  })
+  return { responseHeaders: newHeaders };
+}, { urls: ['https://*.cdn.ampproject.org/v/*'] }, ['blocking', 'responseHeaders']);
 
 // Rewrite 3p.ampproject.net
 chrome.webRequest.onBeforeRequest.addListener(
