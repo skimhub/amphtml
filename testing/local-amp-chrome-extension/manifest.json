@@ -31,8 +31,8 @@
   ],
   "content_scripts": [
     {
-      "matches": ["https://www.google.co.uk/amp/*", "https://*.cdn.ampproject.org/v/*", "http://lepunk.co.uk/*"],
-      "all_frames": true,
+      "matches": ["https://www.google.co.uk/amp/*", "https://*.cdn.ampproject.org/v/*", "http://*/*", "https://*/*"],
+      "all_frames": false,
       "js": ["content-script.js"]
     }
   ]

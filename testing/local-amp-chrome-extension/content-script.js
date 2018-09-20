@@ -5,6 +5,7 @@ function overwriteIframe() {
 }
 
 function injectSkimlinksInDocument(doc) {
+    console.log("Injecting amp-skimlinks in page")
     if(!doc) {
         return
     }
@@ -22,3 +23,4 @@ function injectSkimlinksInDocument(doc) {
 
 
 injectSkimlinksInDocument(document);
+console.log(document);
