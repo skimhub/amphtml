@@ -24,6 +24,7 @@ import {
 import {LayoutPriority} from '../../../../src/layout';
 import {LinkerManager} from '../linker-manager';
 import {Services} from '../../../../src/services';
+import {Transport} from '../transport';
 import {cidServiceForDocForTesting} from
   '../../../../src/service/cid-impl';
 import {
@@ -81,9 +82,10 @@ describes.realWin('amp-analytics', {
       'strings defined. Analytics data will not be sent from this page.';
   const oneScriptChildError = '[AmpAnalytics <unknown id>] The tag should ' +
       'contain only one <script> child.';
-  const configParseError = '[AmpAnalytics <unknown id>] Analytics config ' +
-      'could not be parsed. Is it in a valid JSON format? TypeError: Cannot ' +
-      'read property \'toUpperCase\' of null';
+  const scriptTypeError = '[AmpAnalytics <unknown id>] ' +
+      '<script> child must have type="application/json"';
+  const configParseError = '[AmpAnalytics <unknown id>] Failed to ' +
+      'parse <script> contents. Is it valid JSON?';
   const onAndRequestAttributesError = '[AmpAnalytics <unknown id>] "on" and ' +
       '"request" attributes are required for data to be collected.';
   const onAndRequestAttributesInaboxError = '[AmpAnalytics <unknown id>] ' +
@@ -152,16 +154,16 @@ describes.realWin('amp-analytics', {
     const analytics = new AmpAnalytics(el);
     analytics.createdCallback();
     analytics.buildCallback();
-    sendRequestSpy = sandbox.stub(analytics, 'sendRequest_');
+    sendRequestSpy = sandbox.stub(Transport.prototype, 'sendRequest');
     postMessageSpy = sandbox.spy(analytics.win.parent, 'postMessage');
     return analytics;
   }
 
   function waitForSendRequest(analytics, opt_max, opt_cnt) {
-    expect(analytics.element.style.display).to.equal('');
+    expect(analytics.element).to.not.have.display('none');
     const callCount = opt_cnt || 0;
     return analytics.layoutCallback().then(() => {
-      expect(analytics.element.style.display).to.equal('none');
+      expect(analytics.element).to.have.display('none');
       if (sendRequestSpy.callCount > callCount) {
         return;
       }
@@ -342,45 +344,21 @@ describes.realWin('amp-analytics', {
       },
     };
 
-    it('does not unnecessarily preload iframe transport script', function() {
+    it('initialize iframe transport', () => {
       const el = doc.createElement('amp-analytics');
       el.setAttribute('type', 'foo');
       doc.body.appendChild(el);
       const analytics = new AmpAnalytics(el);
-      sandbox.stub(analytics, 'assertAmpAdResourceId')
-          .callsFake(() => 'fakeId');
-      const preloadSpy = sandbox.spy(analytics, 'preload');
 
       sandbox.stub(AnalyticsConfig.prototype, 'loadConfig')
           .returns(Promise.resolve(sampleconfig));
 
       analytics.buildCallback();
       analytics.preconnectCallback();
+      const initSpy = sandbox.spy(
+          Transport.prototype, 'maybeInitIframeTransport');
       return analytics.layoutCallback().then(() => {
-        expect(preloadSpy).to.have.not.been.called;
-      });
-    });
-
-    it('preloads iframe transport script if relevant', function() {
-      const el = doc.createElement('amp-analytics');
-      el.setAttribute('type', 'foo');
-      doc.body.appendChild(el);
-      const analytics = new AmpAnalytics(el);
-      sandbox.stub(analytics, 'assertAmpAdResourceId')
-          .callsFake(() => 'fakeId');
-      const preloadSpy = sandbox.spy(analytics, 'preload');
-      sandbox.stub(AnalyticsConfig.prototype, 'loadConfig')
-          .returns(Promise.resolve(Object.assign({}, sampleconfig, {
-            'transport': {
-              'iframe': 'http://example.com',
-            },
-          })));
-      analytics.buildCallback();
-      analytics.preconnectCallback();
-      return analytics.layoutCallback().then(() => {
-        expect(preloadSpy.withArgs(
-            'http://localhost:9876/dist/iframe-transport-client-lib.js',
-            'script')).to.be.calledOnce;
+        expect(initSpy).to.be.called;
       });
     });
   });
@@ -407,7 +385,7 @@ describes.realWin('amp-analytics', {
     analytics.buildCallback();
     // Initialization has not started.
     expect(analytics.iniPromise_).to.be.null;
-    sendRequestSpy = sandbox.spy(analytics, 'sendRequest_');
+    sendRequestSpy = sandbox.spy(Transport.prototype, 'sendRequest');
 
     return waitForNoSendRequest(analytics).then(() => {
       expect(sendRequestSpy).to.have.not.been.called;
@@ -427,7 +405,7 @@ describes.realWin('amp-analytics', {
     analytics.buildCallback();
     const iniPromise = analytics.iniPromise_;
     expect(iniPromise).to.be.ok;
-    expect(el.style.display).to.equal('none');
+    expect(el).to.have.attribute('hidden');
     // Viewer.whenFirstVisible is the first blocking call to initialize.
     expect(whenFirstVisibleStub).to.be.calledOnce;
 
@@ -451,7 +429,7 @@ describes.realWin('amp-analytics', {
 
   it('does not send a hit when script tag does not have a type attribute',
       function() {
-        expectAsyncConsoleError(configParseError);
+        expectAsyncConsoleError(scriptTypeError);
         expectAsyncConsoleError(noRequestStringsError);
         expectAsyncConsoleError(noTriggersError);
         const el = doc.createElement('amp-analytics');
@@ -463,12 +441,33 @@ describes.realWin('amp-analytics', {
         el.connectedCallback();
         analytics.createdCallback();
         analytics.buildCallback();
-        sendRequestSpy = sandbox.spy(analytics, 'sendRequest_');
+        sendRequestSpy = sandbox.spy(Transport.prototype, 'sendRequest');
 
         return waitForNoSendRequest(analytics).then(() => {
           expect(sendRequestSpy).to.have.not.been.called;
         });
       });
+
+  it('does not send a hit when json config is not valid', function() {
+    expectAsyncConsoleError(configParseError);
+    expectAsyncConsoleError(noRequestStringsError);
+    expectAsyncConsoleError(noTriggersError);
+    const el = doc.createElement('amp-analytics');
+    const script = doc.createElement('script');
+    script.setAttribute('type', 'application/json');
+    script.textContent = '{"a",}';
+    el.appendChild(script);
+    doc.body.appendChild(el);
+    const analytics = new AmpAnalytics(el);
+    el.connectedCallback();
+    analytics.createdCallback();
+    analytics.buildCallback();
+    sendRequestSpy = sandbox.spy(Transport.prototype, 'sendRequest');
+
+    return waitForNoSendRequest(analytics).then(() => {
+      expect(sendRequestSpy).to.have.not.been.called;
+    });
+  });
 
   it('does not send a hit when request is not provided', function() {
     expectAsyncConsoleError(onAndRequestAttributesError);
@@ -1715,30 +1714,6 @@ describes.realWin('amp-analytics', {
       env.win.AMP_MODE.runtime = 'inabox';
       expect(getAnalyticsTag(getConfig()).getLayoutPriority()).to.equal(
           LayoutPriority.CONTENT);
-    });
-  });
-
-  describe('inabox nested transport iframe', () => {
-    let origAmpMode;
-    beforeEach(() => {
-      origAmpMode = env.win.AMP_MODE;
-      env.win.AMP_MODE = 'inabox';
-      // Unfortunately need to fake sandbox analytics element's parent
-      // to an AMP element
-      doc.body.classList.add('i-amphtml-element');
-    });
-
-    afterEach(() => {
-      doc.body.classList.remove('i-amphtml-element');
-      env.win.AMP_MODE = origAmpMode;
-    });
-
-    it('sends a basic hit', function() {
-      const analytics = getAnalyticsTag(trivialConfig);
-      return waitForSendRequest(analytics).then(() => {
-        expect(sendRequestSpy.withArgs('https://example.com/bar'))
-            .to.be.calledOnce;
-      });
     });
   });
 
