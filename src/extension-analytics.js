@@ -204,7 +204,7 @@ export function useAnalyticsInSandbox(element, promise) {
         return;
       }
       configPromise = null;
-      analyticsElement = insertAnalyticsElement(element, config, false);
+      analyticsElement = insertAnalyticsElement(element, config, true);
     });
   });
 
