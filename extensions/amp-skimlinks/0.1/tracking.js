@@ -232,7 +232,22 @@ export class Tracking {
    * @private
    */
   setupAnalytics_(element) {
-    const analyticsBuilder = new CustomEventReporterBuilder(element);
+    /*
+      Overwrite default analytics config.
+      https://www.ampproject.org/docs/analytics/deep_dive_analytics#how-data-gets-sent:-transport-attribute
+      - Use sendBeacon() if available
+      - Fallback to adding images to the DOM which is the historical way of
+        doing "sendBeacon()"
+        https://developer.mozilla.org/en-US/docs/Web/API/Navigator/sendBeacon
+    */
+    const config = dict({
+      'transport': dict({
+        'beacon': true,
+        'image': true,
+        'xhrpost': false,
+      }),
+    });
+    const analyticsBuilder = new CustomEventReporterBuilder(element, config);
     // Configure analytics to send POST request when receiving
     // 'page-impressions' event.
     analyticsBuilder.track(PAGE_IMPRESSIONS,
@@ -242,20 +257,7 @@ export class Tracking {
     analyticsBuilder.track(NON_AFFILIATE_CLICK,
         NA_CLICK_TRACKING_URL);
 
-    const analytics = analyticsBuilder.build();
-    /*
-      Use {beacon: true} to send the request through sendBeacon()
-      https://www.ampproject.org/docs/analytics/deep_dive_analytics#how-data-gets-sent:-transport-attribute
-
-      Overwrite config manually since CustomEventReporterBuilder doesn't
-      support optional config.
-      TODO: add optional config param to .build() so we don't need to mutate
-      a private property from outside.
-    */
-    // Bracket because analytics.config_ is of type JsonObject.
-    analytics.config_['transport'] = dict({'beacon': true});
-
-    return analytics;
+    return analyticsBuilder.build();
   }
 
   /**

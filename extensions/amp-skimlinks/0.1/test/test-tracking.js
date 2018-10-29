@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import {CustomEventReporterBuilder} from '../../../../src/extension-analytics';
+import * as ExtensionAnalytics from '../../../../src/extension-analytics';
 import {pubcode} from './constants';
 import helpersFactory from './helpers';
 
@@ -25,6 +25,8 @@ import {
   PLATFORM_NAME,
   XCUST_ATTRIBUTE_NAME,
 } from '../constants';
+
+const {CustomEventReporterBuilder} = ExtensionAnalytics;
 
 describes.fakeWin(
     'test-tracking',
@@ -92,9 +94,19 @@ describes.fakeWin(
             expect(impressionId1).to.not.equal(impressionId2);
           });
 
-          it('Should set the amp-analytics beacon flag to true', () => {
-            const tracking = helpers.createTrackingWithStubAnalytics();
-            expect(tracking.analytics_.config_.transport.beacon).to.be.true;
+          it('Should configure transport methods', () => {
+            // Spy CustomEventReporterBuilder constructor
+            env.sandbox.spy(ExtensionAnalytics, 'CustomEventReporterBuilder');
+            // Initialise Tracking
+            helpers.createTrackingWithStubAnalytics();
+            const spy = ExtensionAnalytics.CustomEventReporterBuilder;
+            expect(spy.firstCall.args[1]).to.deep.equal({
+              'transport': {
+                'beacon': true,
+                'image': true,
+                'xhrpost': false,
+              },
+            });
           });
 
           it('Should setup the page-impressions analytics correctly', () => {
