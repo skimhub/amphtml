@@ -24,9 +24,11 @@ import {AffiliateLinkResolver} from './affiliate-link-resolver';
 import {SKIMLINKS_REWRITER_ID} from './constants';
 import {EVENTS as linkRewriterEvents} from './link-rewriter/constants';
 
+import {Layout} from '../../../src/layout';
 import {LinkRewriterManager} from './link-rewriter/link-rewriter-manager';
 import {Waypoint} from './waypoint';
 import {getAmpSkimlinksOptions} from './skim-options';
+
 
 export class AmpSkimlinks extends AMP.BaseElement {
   /**
@@ -230,8 +232,8 @@ export class AmpSkimlinks extends AMP.BaseElement {
   }
 
   /** @override */
-  isLayoutSupported() {
-    return true;
+  isLayoutSupported(layout) {
+    return layout === Layout.NODISPLAY;
   }
 }
 

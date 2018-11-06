@@ -210,7 +210,7 @@ export class AffiliateLinkResolver {
    * @private
    */
   getNewDomains_(anchorList) {
-    return anchorList.reduce(((acc, anchor) => {
+    return anchorList.reduce((acc, anchor) => {
       const domain = this.getAnchorDomain_(anchor);
       const isResolved = this.domains_[domain];
       const isExcluded = isExcludedDomain(domain, this.skimOptions_);
@@ -221,7 +221,7 @@ export class AffiliateLinkResolver {
       }
 
       return acc;
-    }), []);
+    }, []);
   }
 
   /**
