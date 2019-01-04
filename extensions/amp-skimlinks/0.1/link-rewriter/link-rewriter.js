@@ -22,7 +22,7 @@ import {TwoStepsResponse} from './two-steps-response';
 import {userAssert} from '../../../../src/log';
 
 
-/** @typedef {!Array<{anchor: !HTMLElement, replacementUrl: ?string}>}} */
+/** @typedef {!Array<{anchor: !HTMLElement, rewriteFunction: ?Function}>}} */
 export let AnchorReplacementList;
 
 
@@ -85,7 +85,10 @@ export class LinkRewriter {
       return null;
     }
 
-    return this.anchorReplacementCache_.getReplacementUrlForAnchor(anchor);
+    const rewriteFunction = this.anchorReplacementCache_
+        .getRewriteFunctionForAnchor(anchor);
+
+    return rewriteFunction ? rewriteFunction(anchor) : null;
   }
 
   /**
@@ -193,7 +196,7 @@ export class LinkRewriter {
     // handlers. (Other anchors are assumed to be the ones exluded by
     // linkSelector_)
     this.anchorReplacementCache_.updateReplacementUrls(
-        unknownAnchors.map(anchor => ({anchor, replacementUrl: null}))
+        unknownAnchors.map(anchor => ({anchor, rewriteFunction: null}))
     );
     const twoStepsResponse = this.resolveUnknownLinks_(unknownAnchors);
     userAssert(twoStepsResponse instanceof TwoStepsResponse,

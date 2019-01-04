@@ -36,17 +36,20 @@ export const AFFILIATE_STATUS = {
 /**
  * The AffiliateLinkResolver class is in charge of "resolving"
  * links, in other words: determining if the URL from a link can be replaced by
- * a new Skimlinks monetizable url or not.
+ * a new Skimlinks monetizable url and how to create that new url.
  *
  * The class is built around one main public method `
  * resolveUnknownAnchors(...)` which is the way for the Skimlinks LinkRewriter
- * to ask for the replacement URLs of all the links in the page.
+ * to ask for the "link rewriting function" (if any) for each anchor in the page.
+ * The "link rewriting function" is the function called to replace the url of
+ * an anchor when a user clicks on a link. It takes an anchor as an argument
+ * and returns the new url that will be used to rewrite the href.
  *
- * In order to know if a link should be replaced or not, we extract the list of
- * unique hostnames from the list of links on the page before sending it to
- * Skimlinks domain resolver API (beaconAPI). The API response contains the
- * list of domains which can be affiliated, enabling us to create a new
- * Skimlinks monetizable URL for all the links belonging to a domain present
+ * In order to first know if a link should be rewritten or not, we extract the
+ * list of unique hostnames from the list of links on the page before sending
+ * it to Skimlinks domain resolver API (beaconAPI). The API response contains
+ * the list of domains which can be affiliated, so we can then provide a "link
+ * rewriting function" for all the links belonging to a domain present
  * in that list.
  *
  * The class implements an in-memory cache (this.domains_) so we only call the
@@ -110,16 +113,17 @@ export class AffiliateLinkResolver {
   }
 
   /**
-   * This is the function used by the Skimlinks LinkRewriter to determine
-   * which URLs should be replaced.
+   * This is the function used by the LinkRewriter to determine
+   * which anchors should be replaced and how to replace it.
    *
-   * For each anchor in the list, returns as part of the synchronous or
-   * asynchronous response what the url replacement should be.
+   * For each anchor in the list, returns (through the synchronous or
+   * asynchronous response) the "link rewriting function" if you want to
+   * rewrite the link or null if not.
    *
    * E.g: anchorList([anchor1, anchor2, anchor3])
    * => {
-   *    syncResponse: [[anchor1, 'https://newurl.com'], [anchor2, null]],
-   *    asyncResponse: Promise.resolve([[anchor3, 'https://newurl.com']])
+   *    syncResponse: [[anchor1, getNewUrlFromAnchor], [anchor2, null]],
+   *    asyncResponse: Promise.resolve([[anchor3, getNewUrlFromAnchor]])
    * }
    *
    * @param {!Array<!HTMLElement>} anchorList
@@ -127,7 +131,7 @@ export class AffiliateLinkResolver {
    * @public
    */
   resolveUnknownAnchors(anchorList) {
-    const alreadyResolvedResponse = this.associateWithReplacementUrl_(
+    const alreadyResolvedResponse = this.associateWithRewriteFunction_(
         anchorList);
     let willBeResolvedPromise = null;
 
@@ -149,16 +153,17 @@ export class AffiliateLinkResolver {
 
   /**
    * Map an array of anchor to an array of "replacement object" containing
-   * the anchor and its associated replacement URL.
+   * the anchor and its associated "link rewrting function".
    *
-   * A falsy replacement URL means the URL should not be replaced.
+   * A null value instead of the link rewriting function means
+   * the URL should not be replaced.
    *
    * The replacement URL is determined based on the affiliate status of
    * the domain of the initial URL.
    *  E.g:
-   *  associateWithReplacementUrl_([anchor1, anchor2])
+   *  associateWithRewriteFunction_([anchor1, anchor2])
    *  => [
-   *    {anchor1, 'https://newurl.com'},
+   *    {anchor1, waypoint.getAffiliateUrl},
    *    {anchor2, null},
    *  ]
    *
@@ -166,9 +171,9 @@ export class AffiliateLinkResolver {
    * @return {!./link-rewriter/link-rewriter.AnchorReplacementList}
    * @private
    */
-  associateWithReplacementUrl_(anchorList) {
+  associateWithRewriteFunction_(anchorList) {
     return anchorList.map(anchor => {
-      let replacementUrl = null;
+      let rewriteFunction = null;
       const status = this.getDomainAffiliateStatus_(
           this.getAnchorDomain_(anchor));
       // Always replace unknown, we will overwrite them after asking
@@ -176,12 +181,13 @@ export class AffiliateLinkResolver {
       const shouldReplace = status === AFFILIATE_STATUS.AFFILIATE ||
                             status === AFFILIATE_STATUS.UNKNOWN;
       if (shouldReplace) {
-        replacementUrl = this.waypoint_.getAffiliateUrl(anchor);
+        rewriteFunction = this.waypoint_.getAffiliateUrl
+            .bind(this.waypoint_);
       }
 
       return (
         /** @type {!./link-rewriter/link-rewriter.AnchorReplacementList} */
-        ({anchor, replacementUrl})
+        ({anchor, rewriteFunction})
       );
     });
   }
@@ -280,7 +286,7 @@ export class AffiliateLinkResolver {
       const merchantDomains = data['merchant_domains'] || [];
       this.updateDomainsStatusMap_(domainsToAsk, merchantDomains);
 
-      return this.associateWithReplacementUrl_(anchorList);
+      return this.associateWithRewriteFunction_(anchorList);
     });
   }
 

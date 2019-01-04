@@ -272,13 +272,13 @@ export class Tracking {
     let numberAffiliateLinks = 0;
     const urls = dict({});
 
-    anchorReplacementList.forEach(({replacementUrl, anchor}) => {
+    anchorReplacementList.forEach(({rewriteFunction, anchor}) => {
       if (isExcludedAnchorUrl(anchor, this.skimOptions_)) {
         return;
       }
 
       urls[anchor.href] = urls[anchor.href] || dict({
-        'ae': replacementUrl ? 1 : 0,
+        'ae': rewriteFunction ? 1 : 0,
         'count': 0,
       });
 
