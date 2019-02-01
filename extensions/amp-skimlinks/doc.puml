@@ -5,68 +5,58 @@ end box
 
 [-> AMPskimlinks: User visits AMP page.
 
-==  whenDocumentReady ==
-hnote over AMPskimlinks: Attach amp-skimlinks click handler
+==  whenBodyAvailable (DOM ready, can be pre-rendering phase) ==
+hnote over AMPskimlinks: Register amp-skimlinks click handler
 hnote over AMPskimlinks: Find links in page
-AMPskimlinks -> DomainResolverAPI as "Merchant Domain Resolver API \n (r.skimresources.com)": Request (GET): [domainA, domainB, domainC]?
+AMPskimlinks -> BeaconAPI as "Beacon API \n (r.skimresources.com)": Request (GET): [domainA, domainB, domainC]?
 note left
     Send all domains found in the
-    page to our API and resolve
+    page to beacon API to check
     which ones can be affiliated
 end note
-DomainResolverAPI --> AMPskimlinks: Response: { DomainA: yes, domainB: false, domainC: false }
-hnote over AMPskimlinks: Update list of affiliated links
-'hnote over AMPskimlinks: Prepare tracking data
+BeaconAPI --> AMPskimlinks: Response: [domainA, domainC]
+hnote over AMPskimlinks: Update list of affiliate links
+==  whenFirstVisible (page visible, actual rendering) ==
 AMPskimlinks -> TrackingAPI as "Tracking API \n (t.skimresources.com)": Page impression tracking (POST): data={...}
 TrackingAPI --> AMPskimlinks:
 |||
-AMPskimlinks -> TrackingAPI: Link impressions tracking (POST): data={...}
+AMPskimlinks -> TrackingAPI: Links impression tracking (POST): data={...}
 TrackingAPI --> AMPskimlinks:
 
 == On DOM changes ==
 hnote over AMPskimlinks: DOM changes handler
-... Buffer DOM changes for X ms ...
-AMPskimlinks -> DomainResolverAPI: Request (GET): [domainD, domainE]?
+AMPskimlinks -> BeaconAPI: Request (GET): [domainD, domainE]?
 note left
     Send all **new** domains found in the
-    page to our API.
+    page to Beacon API.
 end note
-DomainResolverAPI --> AMPskimlinks: Response: { DomainD: yes, domainE: false }
-hnote over AMPskimlinks: Update list of affiliated links
+BeaconAPI --> AMPskimlinks: Response: { DomainD: yes, domainE: false }
+hnote over AMPskimlinks: Update list of affiliate links
 
 == On anchor click ==
 'IF
-AMPskimlinks -> AffiliationAPI as "Affiliation API \n (go.skimresources.com)": Navigate to affiliated url
-note left AMPskimlinks #68b17a: **IF** link is affiliated
+AMPskimlinks -> Waypoint as "Waypoint API \n (go.skimresources.com)": Navigate to waypoint url
+note left AMPskimlinks #68b17a: **IF** link is AE
 activate AMPskimlinks #68b17a
 |||
-AffiliationAPI ->] : Redirect to merchant page
+Waypoint ->] : Redirect to merchant page
 deactivate AMPskimlinks
 
 |||
 
 ' ELSE
-AMPskimlinks -> TrackingAPI: Track non-affiliated click (sendBeacon, POST)
+AMPskimlinks -> TrackingAPI: Track NA click
 activate AMPskimlinks #orange
 TrackingAPI --> AMPskimlinks
-note left AMPskimlinks #orange: **ELSE** (link is not affiliated)
+note left AMPskimlinks #orange: **ELSE** (NA)
 |||
 AMPskimlinks ->] : Navigate to url
 deactivate AMPskimlinks
 
-' alt link is not affiliated
-'     AMPskimlinks -> TrackingAPI: Track non-affilaited click (POST)
-'     AMPskimlinks ->] : Go to Merchant page
-' else link is affiliated
-'     |||
-'     AMPskimlinks -> AffiliationAPI: Affiliated click
-'     AffiliationAPI ->] : Redirect to Merchant page
-' end
-
 box "Skimlinks APIs" #LightBlue
-	participant DomainResolverAPI
+	participant BeaconAPI
     participant TrackingAPI
-    participant AffiliationAPI
+    participant Waypoint
 end box
 
 @enduml
