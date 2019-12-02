@@ -138,9 +138,16 @@ function getLinkSelector_(element) {
  * @return {?string}
  */
 function getExcludeSelector_(element) {
-  const linkSelector = element.getAttribute('exclude-selector');
+  // Always exclude:
+  //  - links with "noskimlinks" class
+  //  - links within a parent container (direct or not) with a "noskimlinks" class.
+  const defaultExcludeSelector = 'a.noskimlinks, .noskimlinks a';
+  const userExcludeSelector = element.getAttribute('exclude-selector');
+  const excludeSelector = userExcludeSelector
+    ? userExcludeSelector.concat(`, ${defaultExcludeSelector}`)
+    : defaultExcludeSelector;
 
-  return linkSelector || null;
+  return excludeSelector;
 }
 
 /**

@@ -141,5 +141,30 @@ describes.fakeWin(
         expect(options.waypointBaseUrl).to.equal(`http://${cname}`);
       });
     });
+
+    describe('exclude-selector', () => {
+      it('Should have the noskimlinks exclude selector by default', () => {
+        const element = helpers.createAmpSkimlinksElement({
+          'publisher-code': '123X123',
+        });
+        const options = getAmpSkimlinksOptions(element, docInfo);
+
+        expect(options.excludeSelector).to.equal(
+          'a.noskimlinks, .noskimlinks a'
+        );
+      });
+
+      it('Should have both the noskimlinks exclude selector and the custom exclude selector when defined', () => {
+        const element = helpers.createAmpSkimlinksElement({
+          'publisher-code': '123X123',
+          'exclude-selector': '.taboola a',
+        });
+        const options = getAmpSkimlinksOptions(element, docInfo);
+
+        expect(options.excludeSelector).to.equal(
+          '.taboola a, a.noskimlinks, .noskimlinks a'
+        );
+      });
+    });
   }
 );
