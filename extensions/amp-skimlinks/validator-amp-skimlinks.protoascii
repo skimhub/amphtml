@@ -46,6 +46,9 @@ tags: {  # <amp-skimlinks>
     name: "link-selector"
   }
   attrs: {
+    name: "exclude-selector"
+  }
+  attrs: {
     name: "publisher-code"
     value_regex_casei: "^[0-9]+X[0-9]+$"
     mandatory: true
