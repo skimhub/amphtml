@@ -95,7 +95,7 @@ describes.fakeWin(
           'excluded-domains': 'amazon.com  amazon.fr ',
           tracking: false,
           'custom-tracking-id': 'campaignX',
-          'link-selector': '.content a',
+          'include-selector': '.content a',
         };
         ampSkimlinks = helpers.createAmpSkimlinks(options);
         env.sandbox.stub(ampSkimlinks, 'startSkimcore_');
@@ -107,7 +107,7 @@ describes.fakeWin(
             pubcode: options['publisher-code'],
             tracking: options['tracking'],
             customTrackingId: options['custom-tracking-id'],
-            linkSelector: options['link-selector'],
+            includeSelector: options['include-selector'],
           });
           expect(ampSkimlinks.skimOptions_.excludedDomains).to.include.members([
             'amazon.com',
@@ -121,7 +121,7 @@ describes.fakeWin(
 
         beforeEach(() => {
           ampSkimlinks.skimOptions_ = {
-            linkSelector: '.article a',
+            includeSelector: '.article a',
           };
           ampSkimlinks.linkRewriterService_ = new LinkRewriterManager(
             env.ampdoc
@@ -152,7 +152,7 @@ describes.fakeWin(
           expect(args[0]).to.equal(SKIMLINKS_REWRITER_ID);
           expect(args[1]).to.be.a('function');
           expect(args[2].linkSelector).to.equal(
-            ampSkimlinks.skimOptions_.linkSelector
+            ampSkimlinks.skimOptions_.includeSelector
           );
         });
 

@@ -46,6 +46,9 @@ tags: {  # <amp-skimlinks>
     name: "link-selector"
   }
   attrs: {
+    name: "include-selector"
+  }
+  attrs: {
     name: "exclude-selector"
   }
   attrs: {

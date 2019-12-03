@@ -46,7 +46,7 @@ export function getAmpSkimlinksOptions(element, docInfo) {
     excludedDomains: getExcludedDomains_(element, getInternalDomains_(docInfo)),
     tracking: getTrackingStatus_(element),
     customTrackingId: getCustomTrackingId_(element),
-    linkSelector: getLinkSelector_(element),
+    includeSelector: getIncludeSelector_(element),
     excludeSelector: getExcludeSelector_(element),
     waypointBaseUrl: getWaypointBaseUrl(element),
     config: getConfig_(element),
@@ -122,14 +122,17 @@ function getCustomTrackingId_(element) {
 }
 
 /**
- *
  * @param {!Element} element
  * @return {?string}
  */
-function getLinkSelector_(element) {
-  const linkSelector = element.getAttribute('link-selector');
+function getIncludeSelector_(element) {
+  let includeSelector = element.getAttribute('include-selector');
+  if (!includeSelector) {
+    // 'link-selector' is a deprecated equivalent of 'include-selector'.
+    includeSelector = element.getAttribute('link-selector');
+  }
 
-  return linkSelector || null;
+  return includeSelector || null;
 }
 
 /**

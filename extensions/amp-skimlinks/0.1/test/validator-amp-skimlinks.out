@@ -31,6 +31,7 @@ PASS
 |          publisher-code="123X123"
 |          excluded-domains="samsung.com  asos.com"
 |          link-selector="article a"
+|          include-selector="article a"
 |          exclude-selector=".no-affiliate a"
 |          custom-tracking-id="phones"
 |          custom-redirect-domain="go.publisher.com"
