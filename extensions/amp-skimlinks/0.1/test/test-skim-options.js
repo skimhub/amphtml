@@ -201,12 +201,12 @@ describes.fakeWin(
       it('Should have both the noskimlinks exclude selector and the custom exclude selector when defined', () => {
         const element = helpers.createAmpSkimlinksElement({
           'publisher-code': '123X123',
-          'exclude-selector': '.taboola a',
+          'exclude-selector': '.no-affiliate a',
         });
         const options = getAmpSkimlinksOptions(element, docInfo);
 
         expect(options.excludeSelector).to.equal(
-          '.taboola a, a.noskimlinks, .noskimlinks a'
+          '.no-affiliate a, a.noskimlinks, .noskimlinks a'
         );
       });
     });
