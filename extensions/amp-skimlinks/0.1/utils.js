@@ -78,3 +78,12 @@ export function isExcludedAnchorUrl(anchor, skimOptions) {
   const domain = getNormalizedHostnameFromAnchor(anchor);
   return isExcludedDomain(domain, skimOptions);
 }
+
+/**
+ * Convert a NodeList to an Array.
+ * @param {NodeList} nodeList
+ * @return {!Array<!HTMLElement>}
+ */
+export function nodeListToArray(nodeList) {
+  return [].slice.call(nodeList);
+}

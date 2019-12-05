@@ -590,6 +590,52 @@ describes.fakeWin('Link Rewriter', {amp: true}, env => {
 
         expect(resolveFunction.firstCall.args[0]).to.deep.equal([anchor2]);
       });
+
+      it('Should ignore links matching excludeSelector', () => {
+        const anchor1 = rootDocument.createElement('a');
+        const anchor2 = rootDocument.createElement('a');
+        anchor2.classList.add('no-affiliate');
+        const anchor3 = rootDocument.createElement('a');
+
+        rootDocument.body.appendChild(anchor1);
+        rootDocument.body.appendChild(anchor2);
+        rootDocument.body.appendChild(anchor3);
+
+        const resolveFunction = createResolveResponseHelper();
+        createLinkRewriterHelper(resolveFunction, {
+          excludeSelector: 'a.no-affiliate',
+        }).scanLinksOnPage_();
+
+        expect(resolveFunction.firstCall.args[0]).to.deep.equal([
+          anchor1,
+          anchor3,
+        ]);
+      });
+
+      it('excludeSelector should have priority over linkSelector', () => {
+        const anchor1 = rootDocument.createElement('a');
+        anchor1.classList.add('affiliate');
+        const anchor2 = rootDocument.createElement('a');
+        anchor2.classList.add('affiliate');
+        const anchor3 = rootDocument.createElement('a');
+
+        const noskimContainer = rootDocument.createElement('div');
+        noskimContainer.classList.add('no-affiliate');
+
+        rootDocument.body.appendChild(noskimContainer);
+        // Anchor1 has affiliate class but is inside a container with no-affiliate.
+        noskimContainer.appendChild(anchor1);
+        rootDocument.body.appendChild(anchor2);
+        rootDocument.body.appendChild(anchor3);
+
+        const resolveFunction = createResolveResponseHelper();
+        createLinkRewriterHelper(resolveFunction, {
+          linkSelector: 'a.affiliate',
+          excludeSelector: '.no-affiliate a',
+        }).scanLinksOnPage_();
+
+        expect(resolveFunction.firstCall.args[0]).to.deep.equal([anchor2]);
+      });
     });
 
     describe('In dynamic page', () => {

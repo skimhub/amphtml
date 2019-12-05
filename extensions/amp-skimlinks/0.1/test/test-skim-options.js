@@ -141,5 +141,74 @@ describes.fakeWin(
         expect(options.waypointBaseUrl).to.equal(`http://${cname}`);
       });
     });
+
+    describe('include-selector', () => {
+      it('Should be null by default', () => {
+        const element = helpers.createAmpSkimlinksElement({
+          'publisher-code': '123X123',
+        });
+        const options = getAmpSkimlinksOptions(element, docInfo);
+
+        expect(options.includeSelector).to.be.null;
+      });
+
+      it('Should read the "include-selector" option', () => {
+        const element = helpers.createAmpSkimlinksElement({
+          'publisher-code': '123X123',
+          'include-selector': 'article a',
+        });
+        const options = getAmpSkimlinksOptions(element, docInfo);
+
+        expect(options.includeSelector).to.equal('article a');
+      });
+
+      it('Should read deprecated "link-selector" option', () => {
+        const element = helpers.createAmpSkimlinksElement({
+          'publisher-code': '123X123',
+          // legacy equivalent of 'include-selector'
+          'link-selector': 'article a',
+        });
+        const options = getAmpSkimlinksOptions(element, docInfo);
+
+        expect(options.includeSelector).to.equal('article a');
+      });
+
+      it('Should prioritise "include-selector" over "link-selector" option', () => {
+        const element = helpers.createAmpSkimlinksElement({
+          'publisher-code': '123X123',
+          'include-selector': 'article a',
+          // legacy equivalent of 'include-selector'
+          'link-selector': 'article.press a',
+        });
+        const options = getAmpSkimlinksOptions(element, docInfo);
+
+        expect(options.includeSelector).to.equal('article a');
+      });
+    });
+
+    describe('exclude-selector', () => {
+      it('Should have the noskimlinks exclude selector by default', () => {
+        const element = helpers.createAmpSkimlinksElement({
+          'publisher-code': '123X123',
+        });
+        const options = getAmpSkimlinksOptions(element, docInfo);
+
+        expect(options.excludeSelector).to.equal(
+          'a.noskimlinks, .noskimlinks a'
+        );
+      });
+
+      it('Should have both the noskimlinks exclude selector and the custom exclude selector when defined', () => {
+        const element = helpers.createAmpSkimlinksElement({
+          'publisher-code': '123X123',
+          'exclude-selector': '.no-affiliate a',
+        });
+        const options = getAmpSkimlinksOptions(element, docInfo);
+
+        expect(options.excludeSelector).to.equal(
+          '.no-affiliate a, a.noskimlinks, .noskimlinks a'
+        );
+      });
+    });
   }
 );

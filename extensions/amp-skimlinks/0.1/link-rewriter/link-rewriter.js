@@ -19,10 +19,17 @@ import {EVENTS, ORIGINAL_URL_ATTRIBUTE} from './constants';
 import {LinkReplacementCache} from './link-replacement-cache';
 import {Observable} from '../../../../src/observable';
 import {TwoStepsResponse} from './two-steps-response';
+import {nodeListToArray} from '../utils';
 import {userAssert} from '../../../../src/log';
 
 /** @typedef {!Array<{anchor: !HTMLElement, replacementUrl: ?string}>}} */
 export let AnchorReplacementList;
+
+/** @typedef {{
+ * linkSelector: (string|undefined),
+ * excludeSelector: (string|undefined)
+ * }} */
+export let LinkRewriterOptions;
 
 /**
  * LinkRewriter works together with LinkRewriterManager to allow rewriting
@@ -47,7 +54,14 @@ export class LinkRewriter {
    * @param {!Document|!ShadowRoot} rootNode
    * @param {string} id
    * @param {function(!Array<!HTMLElement>):!TwoStepsResponse} resolveUnknownLinks
-   * @param {?{linkSelector: string}=} options
+   * @param {?LinkRewriterOptions=} options
+   *   - "linkSelector" option is an optional CSS selector to restrict
+   *     which anchors the link rewriter should handle.
+   *     Only anchors matching the CSS selector will be considered for affiliate.
+   *     If not provided the link rewrite will handle all the links
+   *     found on the page.
+   *   - "excludeSelector" option is an optional CSS selector. All anchors
+   *     matching this selector will be ignored by amp-skimlinks.
    */
   constructor(rootNode, id, resolveUnknownLinks, options) {
     /** @public {!../../../../src/observable.Observable} */
@@ -64,6 +78,9 @@ export class LinkRewriter {
 
     /** @private {string} */
     this.linkSelector_ = options.linkSelector || 'a';
+
+    /** @private {string} */
+    this.excludeSelector_ = options.excludeSelector || '';
 
     /** @private {number} */
     this.restoreDelay_ = 300; //ms
@@ -188,8 +205,8 @@ export class LinkRewriter {
 
     // Register all new anchors discovered as "unknown" status.
     // Note: Only anchors with a status will be considered in the click
-    // handlers. (Other anchors are assumed to be the ones exluded by
-    // linkSelector_)
+    // handlers. (Other anchors are assumed to be the ones excluded by
+    // linkSelector_ and excludeSelector_)
     this.anchorReplacementCache_.updateReplacementUrls(
       unknownAnchors.map(anchor => ({anchor, replacementUrl: null}))
     );
@@ -236,12 +253,24 @@ export class LinkRewriter {
 
   /**
    * Get the list of anchors element in the page.
-   * (Based on linkSelector option)
+   * (Based on linkSelector & excludeSelector options)
    * @return {!Array<!HTMLElement>}
    * @private
    */
   getLinksInDOM_() {
-    const q = this.rootNode_.querySelectorAll(this.linkSelector_);
-    return [].slice.call(q);
+    const includedNodeList = this.rootNode_.querySelectorAll(
+      this.linkSelector_
+    );
+    // Convert from NodeList to array
+    let anchors = nodeListToArray(includedNodeList);
+
+    if (this.excludeSelector_) {
+      const excludedAnchors = nodeListToArray(
+        this.rootNode_.querySelectorAll(this.excludeSelector_)
+      );
+      anchors = anchors.filter(a => excludedAnchors.indexOf(a) === -1);
+    }
+
+    return anchors;
   }
 }

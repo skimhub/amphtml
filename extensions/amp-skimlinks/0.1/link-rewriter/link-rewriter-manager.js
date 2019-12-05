@@ -90,13 +90,7 @@ export class LinkRewriterManager {
    * @param {!function(!Array<!HTMLElement>): !./two-steps-response.TwoStepsResponse} resolveUnknownLinks
    *   - Function to determine which anchor should be replaced and by what URL.
    *     Should return an instance of './two-steps-response.TwoStepsResponse'.
-   * @param {?{linkSelector: string}=} options
-   *   - linkSelector is an optional CSS selector to restrict
-   *    which anchors the link rewriter should handle.
-   *    Anchors not matching the CSS selector will be ignored.
-   *    If not provided the link rewrite will handle all the links
-   *    found on the page.
-   *
+   * @param {?./link-rewriter.LinkRewriterOptions=} options
    * @return {!./link-rewriter.LinkRewriter}
    * @public
    */

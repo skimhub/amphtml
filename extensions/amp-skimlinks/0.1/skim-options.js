@@ -46,7 +46,8 @@ export function getAmpSkimlinksOptions(element, docInfo) {
     excludedDomains: getExcludedDomains_(element, getInternalDomains_(docInfo)),
     tracking: getTrackingStatus_(element),
     customTrackingId: getCustomTrackingId_(element),
-    linkSelector: getLinkSelector_(element),
+    includeSelector: getIncludeSelector_(element),
+    excludeSelector: getExcludeSelector_(element),
     waypointBaseUrl: getWaypointBaseUrl(element),
     config: getConfig_(element),
   };
@@ -89,7 +90,6 @@ function getPubCode_(element) {
 }
 
 /**
- *
  * @param {!Element} element
  * @return {boolean}
  */
@@ -121,14 +121,35 @@ function getCustomTrackingId_(element) {
 }
 
 /**
+ * @param {!Element} element
+ * @return {?string}
+ */
+function getIncludeSelector_(element) {
+  let includeSelector = element.getAttribute('include-selector');
+  if (!includeSelector) {
+    // 'link-selector' is a deprecated equivalent of 'include-selector'.
+    includeSelector = element.getAttribute('link-selector');
+  }
+
+  return includeSelector || null;
+}
+
+/**
  *
  * @param {!Element} element
  * @return {?string}
  */
-function getLinkSelector_(element) {
-  const linkSelector = element.getAttribute('link-selector');
+function getExcludeSelector_(element) {
+  // Always exclude:
+  //  - Links with "noskimlinks" class.
+  //  - Links within a parent container (direct or not) with a "noskimlinks" class.
+  const defaultExcludeSelector = 'a.noskimlinks, .noskimlinks a';
+  const userExcludeSelector = element.getAttribute('exclude-selector');
+  const excludeSelector = userExcludeSelector
+    ? userExcludeSelector.concat(`, ${defaultExcludeSelector}`)
+    : defaultExcludeSelector;
 
-  return linkSelector || null;
+  return excludeSelector;
 }
 
 /**

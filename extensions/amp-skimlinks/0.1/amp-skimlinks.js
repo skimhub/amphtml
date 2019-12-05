@@ -160,7 +160,8 @@ export class AmpSkimlinks extends AMP.BaseElement {
    */
   initSkimlinksLinkRewriter_() {
     const options = {
-      linkSelector: this.skimOptions_.linkSelector,
+      linkSelector: this.skimOptions_.includeSelector,
+      excludeSelector: this.skimOptions_.excludeSelector,
     };
 
     const linkRewriter = this.linkRewriterService_.registerLinkRewriter(
